@@ -1,0 +1,50 @@
+@host = http://localhost:5264
+
+### 1. Получить токен (admin / admin123)
+# @name login
+POST {{host}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+### Токен из ответа
+@token = {{login.response.body.token}}
+
+### 2. Список препаратов (без токена)
+GET {{host}}/api/Drugs
+
+### 3. Создать препарат (CRUD-POST, под токеном)
+POST {{host}}/api/Drugs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Аспирин",
+  "manufacturer": "Bayer",
+  "price": 199.90,
+  "quantity": 50
+}
+
+### 4. Benchmark — вставка через URL (можно открыть прямо в браузере)
+GET {{host}}/api/Benchmark/insert?message=hello
+
+### 5. Сложный POST с датой — корректная (в пределах ± месяц)
+POST {{host}}/api/Reservations
+Content-Type: application/json
+
+{
+  "customerName": "Иван",
+  "reservationDate": "2026-06-25T10:00:00Z"
+}
+
+### 6. Сложный POST с датой — НЕкорректная (вне диапазона) → 400
+POST {{host}}/api/Reservations
+Content-Type: application/json
+
+{
+  "customerName": "Иван",
+  "reservationDate": "2030-01-01T10:00:00Z"
+}
