@@ -6,12 +6,14 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.OpenApi;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("Default")
-    ?? throw new InvalidOperationException("Не задана строка подключения ConnectionStrings:Default.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Не задана строка подключения ConnectionStrings:DefaultConnection.");
 
 // EF Core + PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(connectionString));
@@ -43,16 +45,18 @@ builder.Services
 builder.Services.AddAuthorization();
 
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 // Прогон SQL-миграций Evolve при старте приложения
 RunEvolveMigrations(connectionString, app.Logger);
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.MapGet("/", () => Results.Redirect("/swagger/index.html"));
+
+app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
